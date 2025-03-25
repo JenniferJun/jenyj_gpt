@@ -1,4 +1,6 @@
 env/
 .env
 .db
+files/
+.cache/
 .streamlit/
