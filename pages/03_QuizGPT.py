@@ -68,24 +68,6 @@ llm = ChatOpenAI(
 
 def format_docs(docs):
     return "\n\n".join(document.page_content for document in docs)
-
-
-questions_prompt = ChatPromptTemplate.from_messages(
-    [
-        (
-            "system",
-            """
-    You are a helpful assistant that is role playing as a teacher.
-         
-    Based ONLY on the following context make 10 (TEN) questions to test the user's knowledge about the text.
-    
-    Each question should have 4 answers, three of them must be incorrect and one should be correct.
-                
-    Context: {context}
-""",
-        )
-    ]
-)
  
 @st.cache_data(show_spinner="Loading file...")
 def split_file(file):
@@ -103,11 +85,32 @@ def split_file(file):
     return docs
 
 
-@st.cache_data(show_spinner="Making quiz...")
-def run_quiz_chain(_docs, topic):
-    chain = {"context": format_docs} | questions_prompt | llm
-    return chain.invoke(_docs)
+questions_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """
+    You are a helpful assistant that is role playing as a teacher.
 
+    Based ONLY on the following context make 10 (TEN) questions to test the user's knowledge about the text.
+    The questions' difficulty should follow 'Difficulty' that has three types of easy, medium and hard.
+    Each question should have 4 answers, three of them must be incorrect and one should be correct.
+    Your turn!
+        
+    Difficulty: {difficulty}
+    Context: {context}
+""",
+        )
+    ]
+)
+ 
+@st.cache_data(show_spinner="Making quiz...")
+def run_quiz_chain(_docs, topic, difficulty):
+    formatted_docs = format_docs(_docs)
+    # 문서 데이터와 함께 체인을 구성합니다.
+    chain = questions_prompt | llm
+    # 체인을 호출하여 결과를 반환합니다. 
+    return chain.invoke({"context": formatted_docs, "difficulty":difficulty})
 
 @st.cache_data(show_spinner="Searching Wikipedia...")
 def wiki_search(term):
@@ -119,6 +122,7 @@ def wiki_search(term):
 with st.sidebar:
     docs = None
     topic = None
+    difficulty = st.sidebar.selectbox("Select the difficulty of the exam:", ["easy", "medium", "hard"])
     choice = st.selectbox(
         "Choose what you want to use.",
         (
@@ -137,6 +141,7 @@ with st.sidebar:
         topic = st.text_input("Search Wikipedia...")
         if topic:
             docs = wiki_search(topic)
+    
 
 
 if not docs:
@@ -150,15 +155,14 @@ if not docs:
     """
     )
 else:
-    response = run_quiz_chain(docs, topic if topic else file.name)
+    response = run_quiz_chain(docs, topic if topic else file.name, difficulty)
     response = response.additional_kwargs["function_call"]["arguments"]
-
-    with st.form("questions_form"):
-        st.write(response)
-        for question in response["questions"]:
-            st.write(question["question"])
+    quiz_data = json.loads(response)
+    with st.form("questions_form"): 
+        answers = {}
+        for i,question in enumerate(quiz_data["questions"]):
             value = st.radio(
-                "Select an option.",
+                question["question"],
                 [answer["answer"] for answer in question["answers"]],
                 index=None,
             )
@@ -166,4 +170,23 @@ else:
                 st.success("Correct!")
             elif value is not None:
                 st.error("Wrong!")
-        button = st.form_submit_button()
+            answers[i] = value 
+        submitted = st.form_submit_button('Submit', disabled='submitted' in st.session_state and st.session_state.submitted)
+    if submitted: 
+        score = 0
+        total = len(quiz_data['questions'])
+        # 답안 검증
+        for i, question in enumerate(quiz_data['questions']):
+            correct_answer = next(ans['answer'] for ans in question['answers'] if ans['correct'])
+            if answers[i] == correct_answer:
+                score += 1
+        # 점수 출력
+        st.subheader(f"You scored {score} out of {total}") 
+        # 만점일 경우
+        if score == total:
+            st.session_state.submitted = True
+            st.success("Congratulations! You scored a perfect score!")
+            st.balloons()
+        else:
+        # 제출 버튼을 다시 표시
+            st.session_state.submitted = False 
