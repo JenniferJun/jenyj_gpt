@@ -29,5 +29,13 @@
   },
   "forwardPorts": [
     8501
-  ]
+  ],
+  "containerEnv": {
+    "OPENAI_API_KEY": "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",
+    "LANGCHAIN_TRACING_V2" : true,
+    "LANGSMITH_TRACING" : true,
+    "LANGCHAIN_ENDPOINT" : "https://api.smith.langchain.com",
+    "LANGCHAIN_API_KEY" : "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"
+
+  }
 }
