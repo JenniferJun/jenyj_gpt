@@ -54,9 +54,11 @@ function = {
     },
 }
 
+openapi_key = st.sidebar.text_input("OpenAI API KEY : ")
 
 llm = ChatOpenAI(
     temperature=0.1,
+    openai_api_key=openapi_key
 ).bind(
     function_call={
         "name": "create_quiz",
@@ -69,6 +71,7 @@ llm = ChatOpenAI(
 def format_docs(docs):
     return "\n\n".join(document.page_content for document in docs)
  
+    
 @st.cache_data(show_spinner="Loading file...")
 def split_file(file):
     file_content = file.read()
