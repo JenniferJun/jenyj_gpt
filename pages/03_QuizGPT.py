@@ -55,7 +55,7 @@ function = {
 }
 
 openapi_key = st.sidebar.text_input("OpenAI API KEY : ")
-
+ 
 llm = ChatOpenAI(
     temperature=0.1,
     openai_api_key=openapi_key
@@ -158,38 +158,42 @@ if not docs:
     """
     )
 else:
-    response = run_quiz_chain(docs, topic if topic else file.name, difficulty)
-    response = response.additional_kwargs["function_call"]["arguments"]
-    quiz_data = json.loads(response)
-    with st.form("questions_form"): 
-        answers = {}
-        for i,question in enumerate(quiz_data["questions"]):
-            value = st.radio(
-                question["question"],
-                [answer["answer"] for answer in question["answers"]],
-                index=None,
-            )
-            if {"answer": value, "correct": True} in question["answers"]:
-                st.success("Correct!")
-            elif value is not None:
-                st.error("Wrong!")
-            answers[i] = value 
-        submitted = st.form_submit_button('Submit', disabled='submitted' in st.session_state and st.session_state.submitted)
-    if submitted: 
-        score = 0
-        total = len(quiz_data['questions'])
-        # 답안 검증
-        for i, question in enumerate(quiz_data['questions']):
-            correct_answer = next(ans['answer'] for ans in question['answers'] if ans['correct'])
-            if answers[i] == correct_answer:
-                score += 1
-        # 점수 출력
-        st.subheader(f"You scored {score} out of {total}") 
-        # 만점일 경우
-        if score == total:
-            st.session_state.submitted = True
-            st.success("Congratulations! You scored a perfect score!")
-            st.balloons()
-        else:
-        # 제출 버튼을 다시 표시
-            st.session_state.submitted = False 
+    # 입력값 검증
+    if not openapi_key:
+        st.error("Please enter your OpenAI API key to proceed.")
+    else:
+        response = run_quiz_chain(docs, topic if topic else file.name, difficulty)
+        response = response.additional_kwargs["function_call"]["arguments"]
+        quiz_data = json.loads(response)
+        with st.form("questions_form"): 
+            answers = {}
+            for i,question in enumerate(quiz_data["questions"]):
+                value = st.radio(
+                    question["question"],
+                    [answer["answer"] for answer in question["answers"]],
+                    index=None,
+                )
+                if {"answer": value, "correct": True} in question["answers"]:
+                    st.success("Correct!")
+                elif value is not None:
+                    st.error("Wrong!")
+                answers[i] = value 
+            submitted = st.form_submit_button('Submit', disabled='submitted' in st.session_state and st.session_state.submitted)
+        if submitted: 
+            score = 0
+            total = len(quiz_data['questions'])
+            # 답안 검증
+            for i, question in enumerate(quiz_data['questions']):
+                correct_answer = next(ans['answer'] for ans in question['answers'] if ans['correct'])
+                if answers[i] == correct_answer:
+                    score += 1
+            # 점수 출력
+            st.subheader(f"You scored {score} out of {total}") 
+            # 만점일 경우
+            if score == total:
+                st.session_state.submitted = True
+                st.success("Congratulations! You scored a perfect score!")
+                st.balloons()
+            else:
+            # 제출 버튼을 다시 표시
+                st.session_state.submitted = False 
