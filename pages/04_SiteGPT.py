@@ -153,9 +153,9 @@ st.markdown(
     """
     Welcome! SiteGPT
 
-    SiteGPT gather Cloudflare's documentation 
+    SiteGPT gathers Cloudflare's documentation 
     related to AI Gateway, Cloudflare Vectorize and Workers AI.
-    
+
     You can ask questions about the gathered contents of a website.
             
     Start by writing the OpenAI API key on the sidebar and finishing the crawling URLs on the sitemap.
