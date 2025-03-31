@@ -110,10 +110,9 @@ questions_prompt = ChatPromptTemplate.from_messages(
 @st.cache_data(show_spinner="Making quiz...")
 def run_quiz_chain(_docs, topic, difficulty):
     formatted_docs = format_docs(_docs)
-    # 문서 데이터와 함께 체인을 구성합니다.
-    chain = questions_prompt | llm
-    # 체인을 호출하여 결과를 반환합니다. 
-    return chain.invoke({"context": formatted_docs, "difficulty":difficulty})
+    chain = questions_prompt | llm 
+    if(_docs and difficulty):
+        return chain.invoke({"context": formatted_docs, "difficulty":difficulty})
 
 @st.cache_data(show_spinner="Searching Wikipedia...")
 def wiki_search(term):
