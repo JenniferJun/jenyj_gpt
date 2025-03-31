@@ -6,9 +6,19 @@ from langchain.embeddings import OpenAIEmbeddings
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 import streamlit as st
+import time 
+ 
+
+st.set_page_config(
+    page_title="SiteGPT",
+    page_icon="🖥️",
+)
+ 
+openapi_key = st.sidebar.text_input("OpenAI API KEY : ")
 
 llm = ChatOpenAI(
     temperature=0.1,
+    openai_api_key=openapi_key,
 )
 
 answers_prompt = ChatPromptTemplate.from_template(
@@ -113,67 +123,59 @@ def parse_page(soup):
         .replace("\xa0", " ")
         .replace("CloseSearch Submit Blog", "")
     )
-
+        
 
 @st.cache_data(show_spinner="Loading website...")
 def load_website(url):
+    filter_exp = ["^https://developers\.cloudflare\.com/(ai-gateway/|vectorize/|workers-ai/).*"]
+    
     splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
         chunk_size=1000,
         chunk_overlap=200,
     )
     loader = SitemapLoader(
-        url,
+        url, 
+        filter_urls=filter_exp,
         parsing_function=parse_page,
     )
     loader.requests_per_second = 2
-    docs = loader.load_and_split(text_splitter=splitter)
+    docs = loader.load_and_split(text_splitter=splitter) 
     vector_store = FAISS.from_documents(docs, OpenAIEmbeddings())
     return vector_store.as_retriever()
 
 
-st.set_page_config(
-    page_title="SiteGPT",
-    page_icon="🖥️",
-)
+st.title("SiteGPT (Assignment)")
 
+if not openapi_key:
+    st.error("Please enter your OpenAI API key to proceed.")
 
 st.markdown(
     """
-    # SiteGPT
+    Welcome! SiteGPT
+
+    SiteGPT gather Cloudflare's documentation 
+    related to AI Gateway, Cloudflare Vectorize and Workers AI.
+    
+    You can ask questions about the gathered contents of a website.
             
-    Ask questions about the content of a website.
-            
-    Start by writing the URL of the website on the sidebar.
+    Start by writing the OpenAI API key on the sidebar and finishing the crawling URLs on the sitemap.
+    
 """
 )
 
+if openapi_key:  
+    retriever = load_website("https://developers.cloudflare.com/sitemap-0.xml")
+    query = st.text_input("Ask a question to the website.")
+    if query:
+        chain = (
+            {
+                "docs": retriever,
+                "question": RunnablePassthrough(),
+            }
+            | RunnableLambda(get_answers)
+            | RunnableLambda(choose_answer)
+        )
+        result = chain.invoke(query)
+        st.markdown(result.content.replace("$", "\$")) 
+ 
 
-with st.sidebar:
-    url = st.text_input(
-        "Write down a URL",
-        placeholder="https://example.com",
-    )
-
-
-if url:
-    # import requests
-    # response = requests.get("https://deepmind.google/sitemap.xml")
-    # print(response.text)
-    
-    if ".xml" not in url:
-        with st.sidebar:
-            st.error("Please write down a Sitemap URL.")
-    else:
-        retriever = load_website(url)
-        query = st.text_input("Ask a question to the website.")
-        if query:
-            chain = (
-                {
-                    "docs": retriever,
-                    "question": RunnablePassthrough(),
-                }
-                | RunnableLambda(get_answers)
-                | RunnableLambda(choose_answer)
-            )
-            result = chain.invoke(query)
-            st.markdown(result.content.replace("$", "\$"))

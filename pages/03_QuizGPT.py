@@ -13,7 +13,7 @@ st.set_page_config(
     page_icon="❓",
 )
 
-st.title("QuizGPT")
+st.title("QuizGPT (Assignment)")
 
 
 function = {

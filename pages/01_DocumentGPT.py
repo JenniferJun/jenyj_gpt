@@ -29,12 +29,15 @@ class ChatCallbackHandler(BaseCallbackHandler):
         self.message_box.markdown(self.message)
 
 
+openapi_key = st.sidebar.text_input("OpenAI API KEY : ")
+
 llm = ChatOpenAI(
     temperature=0.1,
     streaming=True,
     callbacks=[
         ChatCallbackHandler(),
     ],
+    openai_api_key=openapi_key,
 )
 
 
@@ -98,7 +101,10 @@ prompt = ChatPromptTemplate.from_messages(
 )
 
 
-st.title("DocumentGPT")
+st.title("DocumentGPT (Assignment)")
+# 입력값 검증
+if not openapi_key:
+    st.error("Please enter your OpenAI API key to proceed.") 
 
 st.markdown(
     """
