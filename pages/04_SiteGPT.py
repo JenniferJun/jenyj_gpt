@@ -160,6 +160,16 @@ st.markdown(
             
     Start by writing the OpenAI API key on the sidebar and finishing the crawling URLs on the sitemap.
     
+    Then Ask a question to the website.For example: 
+    
+    What is the price per 1M input tokens of the llama-2-7b-chat-fp16 model?
+    What can I do with Cloudflare’s AI Gateway?
+    How many indexes can a single account have in Vectorize?
+
+    llama-2-7b-chat-fp16 모델의 1M 입력 토큰당 가격은 얼마인가요?
+    Cloudflare의 AI 게이트웨이로 무엇을 할 수 있나요?
+    벡터라이즈에서 단일 계정은 몇 개의 인덱스를 가질 수 있나요?
+
 """
 )
 
