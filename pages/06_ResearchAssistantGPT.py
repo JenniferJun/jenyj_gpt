@@ -36,11 +36,11 @@ st.markdown(
     """
     Welcome to Research Assistant GPT.
             
-     Ask a question for research and our Assistant will support reference URLs and summarise those pages.
+     Ask a question for research and our Assistant will support reference URLs and exract those.
 """
 )
 
-
+#and summarise those pages
 # Tools
 def get_term(inputs):
     wkp = WikipediaAPIWrapper()
@@ -51,18 +51,28 @@ def get_term(inputs):
 def get_urls(inputs):
     ddg = DuckDuckGoSearchAPIWrapper()
     term_name = inputs["term_name"]
-    return ddg.run(f"Referrence URLs of {term_name}")
+    urls = ddg.run(f"Referrence 3(Three) URLs of {term_name}")
+    print(urls)
+    return urls
 
-def extract_urls(urls):
+def extract_urls(inputs):
+    urls = inputs["urls"]
     web_loader = WebBaseLoader(urls) 
-    loaded_contents = web_loader.load()   
-    return loaded_contents
+    if isinstance(urls, str):
+        try:
+            urls = json.loads(urls)
+        except Exception as e:
+            st.error(f"urls 파싱 중 오류 발생: {e}")
+    web_loader = WebBaseLoader(urls)
+    documents = web_loader.load()   
+    # 각 Document 객체의 page_content를 명시적으로 문자열로 변환한 후 결합
+    combined = "\n\n".join([str(doc.page_content) for doc in documents])
+    return combined
  
-
-
 functions_map = {
     "get_term": get_term,
     "get_urls": get_urls,
+    "extract_urls" : extract_urls,
 }
 
 functions = [
@@ -87,13 +97,13 @@ functions = [
         "type": "function",
         "function": {
             "name": "get_urls",
-            "description": "Given the term returns only URLs of those research",
+            "description": "Find websites as type of Sequence[str]  for Given the term",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "term_name": {
                         "type": "string",
-                        "description": "The term that you want to know",
+                        "description": "The term (i.e Donald Trump) for research",
                     }
                 },
                 "required": ["term_name"],
@@ -109,8 +119,9 @@ functions = [
                 "type": "object",
                 "properties": {
                     "urls": {
-                        "type": "string",
-                        "description": "URLs from get_urls",
+                        "type": "array",
+                        "items": { "type": "string" },
+                        "description": "URLs to extract"
                     }
                 },
                 "required": ["urls"],
@@ -197,7 +208,10 @@ else:
         else:
             assistant = client.beta.assistants.create(
                 name=ASSISTANT_NAME,
-                instructions="You help users do research on the given query using search engines. You give users the summarization of the information you got.",
+                #it finds a website
+                #instructions="You help users do research on the given query using search engines. You give users the summarization of the information you got.",
+                #instructions="You help users do research on the given query using search engines. You give users found websites and exract those.",
+                instructions="You help users do research on the given query using search engines. You give users a summary per website of the information you got.",
                 model="gpt-4o-mini",
                 tools=functions,
             )
