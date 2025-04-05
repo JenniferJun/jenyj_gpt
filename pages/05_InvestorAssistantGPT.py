@@ -28,7 +28,7 @@ class EventHandler(AssistantEventHandler):
 
 st.set_page_config(
     page_title="Investor Assistant GPT",
-    page_icon="🧰",
+    page_icon="",
 )
 
 st.title("Investor Assistant GPT")

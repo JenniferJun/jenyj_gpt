@@ -1,15 +1,15 @@
 import json
 import streamlit as st
-from langchain.utilities import DuckDuckGoSearchAPIWrapper
 from typing_extensions import override
 from openai import AssistantEventHandler
 import openai as client
-import yfinance
+from langchain.utilities.duckduckgo_search import DuckDuckGoSearchAPIWrapper
+from langchain.utilities.wikipedia import WikipediaAPIWrapper
+from langchain.document_loaders import WebBaseLoader
 
-ASSISTANT_NAME = "Investor Assistant"
+ASSISTANT_NAME = "Research Assistant"
 
 class EventHandler(AssistantEventHandler):
-
     message = ""
 
     @override
@@ -25,126 +25,99 @@ class EventHandler(AssistantEventHandler):
         if event.event == "thread.run.requires_action":
             submit_tool_outputs(event.data.id, event.data.thread_id)
 
-
 st.set_page_config(
-    page_title="Investor Assistant GPT",
+    page_title="Research Assistant GPT",
     page_icon="🧰",
 )
 
-st.title("Investor Assistant GPT")
+st.title("Research Assistant GPT")
 
 st.markdown(
     """
-    Welcome to Investor Assistant GPT.
+    Welcome to Research Assistant GPT.
             
-    Ask a question about a company and our Assistant will do the research for you.
+     Ask a question for research and our Assistant will support reference URLs and summarise those pages.
 """
 )
 
 
 # Tools
-def get_ticker(inputs):
+def get_term(inputs):
+    wkp = WikipediaAPIWrapper()
+    query = inputs["query"]
+    return wkp.run(f"Term name of {query}")
+
+
+def get_urls(inputs):
     ddg = DuckDuckGoSearchAPIWrapper()
-    company_name = inputs["company_name"]
-    return ddg.run(f"Ticker symbol of {company_name}")
+    term_name = inputs["term_name"]
+    return ddg.run(f"Referrence URLs of {term_name}")
 
-
-def get_income_statement(inputs):
-    ticker = inputs["ticker"]
-    stock = yfinance.Ticker(ticker)
-    return json.dumps(stock.income_stmt.to_json())
-
-
-def get_balance_sheet(inputs):
-    ticker = inputs["ticker"]
-    stock = yfinance.Ticker(ticker)
-    return json.dumps(stock.balance_sheet.to_json())
-
-
-def get_daily_stock_performance(inputs):
-    ticker = inputs["ticker"]
-    stock = yfinance.Ticker(ticker)
-    return json.dumps(stock.history(period="3mo").to_json())
+def extract_urls(urls):
+    web_loader = WebBaseLoader(urls) 
+    loaded_contents = web_loader.load()   
+    return loaded_contents
+ 
 
 
 functions_map = {
-    "get_ticker": get_ticker,
-    "get_income_statement": get_income_statement,
-    "get_balance_sheet": get_balance_sheet,
-    "get_daily_stock_performance": get_daily_stock_performance,
+    "get_term": get_term,
+    "get_urls": get_urls,
 }
 
 functions = [
     {
         "type": "function",
         "function": {
-            "name": "get_ticker",
-            "description": "Given the name of a company returns its ticker symbol",
+            "name": "get_term",
+            "description": "Given query returns its term user want to know",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "company_name": {
+                    "query": {
                         "type": "string",
-                        "description": "The name of the company",
+                        "description": "The query to research. Example: Research about Donald Trump",
                     }
                 },
-                "required": ["company_name"],
+                "required": ["query"],
             },
         },
     },
     {
         "type": "function",
         "function": {
-            "name": "get_income_statement",
-            "description": "Given a ticker symbol (i.e AAPL) returns the company's income statement.",
+            "name": "get_urls",
+            "description": "Given the term returns only URLs of those research",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "ticker": {
+                    "term_name": {
                         "type": "string",
-                        "description": "Ticker symbol of the company",
-                    },
+                        "description": "The term that you want to know",
+                    }
                 },
-                "required": ["ticker"],
+                "required": ["term_name"],
             },
         },
-    },
-    {
+    }, 
+        {
         "type": "function",
         "function": {
-            "name": "get_balance_sheet",
-            "description": "Given a ticker symbol (i.e AAPL) returns the company's balance sheet.",
+            "name": "extract_urls",
+            "description": "Extracts web content from URLs",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "ticker": {
+                    "urls": {
                         "type": "string",
-                        "description": "Ticker symbol of the company",
-                    },
+                        "description": "URLs from get_urls",
+                    }
                 },
-                "required": ["ticker"],
+                "required": ["urls"],
             },
         },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "get_daily_stock_performance",
-            "description": "Given a ticker symbol (i.e AAPL) returns the performance of the stock for the last 100 days.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "ticker": {
-                        "type": "string",
-                        "description": "Ticker symbol of the company",
-                    },
-                },
-                "required": ["ticker"],
-            },
-        },
-    },
+    }, 
 ]
-
 
 #### Utilities
 def get_run(run_id, thread_id):
@@ -236,16 +209,17 @@ else:
         thread = st.session_state["thread"]
 
     paint_history(thread.id)
-    content = st.chat_input("What do you want to search?")
+    content = st.chat_input("What do you want to know?")
     if content:
         with st.spinner('Researching...'):
             send_message(thread.id, content)
             insert_message(content, "user")
 
-        with st.chat_message("assistant"):
-            with client.beta.threads.runs.stream(
-                thread_id=thread.id,
-                assistant_id=assistant.id,
-                event_handler=EventHandler(),
-            ) as stream:
-                stream.until_done()
+            with st.chat_message("assistant"):
+                with client.beta.threads.runs.stream(
+                    thread_id=thread.id,
+                    assistant_id=assistant.id,
+                    event_handler=EventHandler(),
+                ) as stream:
+                    stream.until_done()
+
