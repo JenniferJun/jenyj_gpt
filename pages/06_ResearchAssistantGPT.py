@@ -39,8 +39,6 @@ st.markdown(
      Ask a question for research and our Assistant will support reference URLs and exract those.
 """
 )
-
-#and summarise those pages
 # Tools
 def get_term(inputs):
     wkp = WikipediaAPIWrapper()
@@ -64,8 +62,7 @@ def extract_urls(inputs):
         except Exception as e:
             st.error(f"urls 파싱 중 오류 발생: {e}")
     web_loader = WebBaseLoader(urls)
-    documents = web_loader.load()   
-    # 각 Document 객체의 page_content를 명시적으로 문자열로 변환한 후 결합
+    documents = web_loader.load()
     combined = "\n\n".join([str(doc.page_content) for doc in documents])
     return combined
  
@@ -86,7 +83,7 @@ functions = [
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "The query to research. Example: Research about Donald Trump",
+                        "description": "The query to research. Example: Research about the XZ backdoor",
                     }
                 },
                 "required": ["query"],
@@ -103,7 +100,7 @@ functions = [
                 "properties": {
                     "term_name": {
                         "type": "string",
-                        "description": "The term (i.e Donald Trump) for research",
+                        "description": "The term (i.e: XZ backdoor) for research",
                     }
                 },
                 "required": ["term_name"],
@@ -210,8 +207,8 @@ else:
                 name=ASSISTANT_NAME,
                 #it finds a website
                 #instructions="You help users do research on the given query using search engines. You give users the summarization of the information you got.",
-                #instructions="You help users do research on the given query using search engines. You give users found websites and exract those.",
-                instructions="You help users do research on the given query using search engines. You give users a summary per website of the information you got.",
+                instructions="You help users do research on the given query using search engines. You give users found websites and exract those.",
+                #instructions="You help users do research on the given query using search engines. You give users websites' summary with URLs of the information you got.",
                 model="gpt-4o-mini",
                 tools=functions,
             )
@@ -223,7 +220,7 @@ else:
         thread = st.session_state["thread"]
 
     paint_history(thread.id)
-    content = st.chat_input("What do you want to know?")
+    content = st.chat_input("What do you want to know? i.e) Research about the XZ backdoor")
     if content:
         with st.spinner('Researching...'):
             send_message(thread.id, content)
