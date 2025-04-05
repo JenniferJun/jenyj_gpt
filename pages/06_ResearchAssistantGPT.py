@@ -213,11 +213,11 @@ else:
                 tools=functions,
             )
         thread = client.beta.threads.create()
-        st.session_state["assistant"] = assistant
-        st.session_state["thread"] = thread
+        st.session_state["research_assistant"] = assistant
+        st.session_state["research_thread"] = thread
     else:
-        assistant = st.session_state["assistant"]
-        thread = st.session_state["thread"]
+        assistant = st.session_state["research_assistant"]
+        thread = st.session_state["research_thread"]
 
     paint_history(thread.id)
     content = st.chat_input("What do you want to know? i.e) Research about the XZ backdoor")
@@ -226,7 +226,7 @@ else:
             send_message(thread.id, content)
             insert_message(content, "user")
 
-            with st.chat_message("assistant"):
+            with st.chat_message("research_assistant"):
                 with client.beta.threads.runs.stream(
                     thread_id=thread.id,
                     assistant_id=assistant.id,
