@@ -195,7 +195,7 @@ openapi_key = st.sidebar.text_input("OpenAI API KEY : ")
 if not openapi_key:
     st.error("Please enter your OpenAI API key to proceed.")
 else:
-    if "assistant" not in st.session_state:
+    if "research_assistant" not in st.session_state:
         client.api_key = openapi_key
         assistants = client.beta.assistants.list(limit=10)
         for a in assistants:
