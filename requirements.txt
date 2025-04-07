@@ -19,8 +19,7 @@ blis==0.7.10
 Brotli==1.1.0
 cachetools==5.3.1
 catalogue==2.0.9
-certifi==2024.2.2
-orjson==3.10.2
+certifi==2023.7.22
 cffi==1.15.1
 chardet==5.2.0
 charset-normalizer==3.2.0
@@ -39,7 +38,7 @@ debugpy==1.8.0
 decorator==5.1.1
 dill==0.3.7
 dnspython==2.4.2
-duckduckgo-search==6.3.5
+duckduckgo-search==3.8.5
 EbookLib==0.18
 effdet==0.4.1
 elastic-transport==8.4.0
@@ -90,7 +89,7 @@ jsonschema-specifications==2023.7.1
 jupyter_client==8.3.1
 jupyter_core==5.3.1
 kiwisolver==1.4.5
-langchain==0.0.326
+langchain==0.0.332
 langcodes==3.3.0
 langsmith==0.0.52
 layoutparser==0.3.4
@@ -119,10 +118,10 @@ olefile==0.46
 omegaconf==2.3.0
 onnx==1.14.1
 onnxruntime==1.16.0
-openai==1.70.0
+openai==0.28.0
 opencv-python==4.8.0.76
 openpyxl==3.1.2
-orjson==3.10.2
+orjson==3.9.9
 overrides==7.4.0
 packaging==23.1
 pandas==2.1.0
@@ -220,7 +219,7 @@ traitlets==5.10.0
 transformers==4.34.0
 typer==0.9.0
 typing-inspect==0.9.0
-typing_extensions==4.13.1
+typing_extensions==4.7.1
 tzdata==2023.3
 tzlocal==4.3.1
 ujson==5.8.0
@@ -239,8 +238,4 @@ wikipedia==1.4.0
 xlrd==2.0.1
 XlsxWriter==3.1.5
 yarl==1.9.2
-yfinance==0.2.55
 zipp==3.16.2
-playwright==1.39.0
-html2text==2020.1.16
-
